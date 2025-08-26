@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Clock, Brain } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Brain, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 interface Question {
