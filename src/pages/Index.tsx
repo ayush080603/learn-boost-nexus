@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Brain, BarChart3, Target, Users, Trophy, Play, FlashcardIcon as Card as CardIcon } from "lucide-react";
+import { BookOpen, Brain, BarChart3, Target, Users, Trophy, Play, CreditCard } from "lucide-react";
 import QuizInterface from "@/components/QuizInterface";
 import FlashcardMode from "@/components/FlashcardMode";
 import Dashboard from "@/components/Dashboard";
@@ -19,7 +19,7 @@ const Index = () => {
       description: "Multiple choice, true/false, and fill-in-the-blank questions with instant feedback",
     },
     {
-      icon: CardIcon,
+      icon: CreditCard,
       title: "Smart Flashcards",
       description: "Spaced repetition algorithm helps you learn more efficiently",
     },
@@ -69,7 +69,7 @@ const Index = () => {
               Quiz Mode
             </TabsTrigger>
             <TabsTrigger value="flashcards" className="flex items-center gap-2">
-              <CardIcon className="w-4 h-4" />
+              <CreditCard className="w-4 h-4" />
               Flashcards
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
