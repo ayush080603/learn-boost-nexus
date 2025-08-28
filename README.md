@@ -1,73 +1,73 @@
-# Welcome to your Lovable project
+# 📚 LearnBoost Nexus  
 
-## Project info
+Your **AI-Powered Learning Platform** with **Quizzes, Flashcards & Analytics** 🚀  
 
-**URL**: https://lovable.dev/projects/0dd132e0-d16a-40ba-8bad-9011f39b4569
+---
 
-## How can I edit this code?
+## 🌟 Features  
 
-There are several ways of editing your application.
+✅ **Interactive Quizzes** – Multiple choice, true/false, and fill-in-the-blank with instant feedback  
+✅ **Smart Flashcards** – Spaced repetition algorithm to help you retain knowledge efficiently  
+✅ **Performance Analytics** – Track progress with detailed charts and insights  
+✅ **Personalized Learning** – AI-powered recommendations based on your learning patterns  
+✅ **Scalable Platform** – Over `10K+` active learners already benefiting  
+✅ **Proven Impact** – `94%` quiz completion rate and `+23%` average score improvement  
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0dd132e0-d16a-40ba-8bad-9011f39b4569) and start prompting.
+## 🛠️ Tech Stack  
 
-Changes made via Lovable will be committed automatically to this repo.
+- ⚡ **Frontend**: React + TypeScript + Vite  
+- 🎨 **UI Framework**: Tailwind CSS + shadcn/ui  
+- 📊 **Analytics**: Real-time progress tracking  
+- 🤖 **AI Features**: Adaptive learning & memory enhancement  
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🚀 Getting Started  
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 1️⃣ Clone the repository
 
-Follow these steps:
+    git clone <YOUR_GIT_URL>
+    cd <YOUR_PROJECT_NAME>
+    
+### 2️⃣ Install dependencies
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+    npm install
+    
+### 3️⃣ Run the development server
+    npm run dev
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 🌐 Deployment
 
-# Step 3: Install the necessary dependencies.
-npm i
+  Easily deploy via Lovable
+   → Share → Publish
+  or connect a custom domain under:
+  Project > Settings > Domains > Connect Domain
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 📖 Guide: Custom Domain Setup
 
-**Edit a file directly in GitHub**
+### 📸 Screenshots
+Overview Dashboard
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 👩‍💻 Contributing
 
-**Use GitHub Codespaces**
+    Contributions are welcome! 🎉
+    
+    Fork the repo
+    
+    Create a feature branch (git checkout -b feature-name)
+    
+    Commit changes (git commit -m "Add new feature")
+    
+    Push branch (git push origin feature-name)
+    
+    Open a Pull Request
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 📜 License
 
-## What technologies are used for this project?
+  This project is licensed under the MIT License – free to use and modify.
 
-This project is built with:
+### 🙌 Acknowledgement
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/0dd132e0-d16a-40ba-8bad-9011f39b4569) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+  Built with ❤️ using React, Tailwind, shadcn/ui, and Lovable.dev
