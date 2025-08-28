@@ -48,7 +48,7 @@ Your **AI-Powered Learning Platform** with **Quizzes, Flashcards & Analytics** �
 ## 📖 Guide: Custom Domain Setup
 
 ### 📸 Screenshots
-Overview Dashboard
+![Overview Dashboard](https://raw.githubusercontent.com/ayush080603/learn-boost-nexus/main/01.png)
 
 ### 👩‍💻 Contributing
 
