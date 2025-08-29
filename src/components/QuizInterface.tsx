@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Clock, Brain, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { dataService, Question } from "@/services/dataService";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ErrorMessage from "@/components/ErrorMessage";
 
 const QuizInterface = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -17,28 +19,34 @@ const QuizInterface = () => {
   const [timeLeft, setTimeLeft] = useState(30);
   const [quizComplete, setQuizComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadQuestions();
   }, []);
 
   useEffect(() => {
-    if (!showResult && !quizComplete && timeLeft > 0) {
+    if (!showResult && !quizComplete && timeLeft > 0 && questions.length > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && !showResult) {
+    } else if (timeLeft === 0 && !showResult && questions.length > 0) {
       handleSubmitAnswer();
     }
-  }, [timeLeft, showResult, quizComplete]);
+  }, [timeLeft, showResult, quizComplete, questions.length]);
 
   const loadQuestions = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const fetchedQuestions = await dataService.getQuestions(10);
       if (fetchedQuestions.length > 0) {
         setQuestions(fetchedQuestions);
+      } else {
+        setError("No questions are available at the moment. Please try again later.");
       }
     } catch (error) {
       console.error('Error loading questions:', error);
+      setError("Failed to load questions. Please check your connection and try again.");
       toast.error("Failed to load questions");
     } finally {
       setLoading(false);
@@ -50,7 +58,7 @@ const QuizInterface = () => {
     setSelectedAnswer(answerIndex);
   };
 
-  const handleSubmitAnswer = () => {
+  const handleSubmitAnswer = async () => {
     if (selectedAnswer === null && timeLeft > 0) {
       toast.error("Please select an answer first!");
       return;
@@ -67,7 +75,7 @@ const QuizInterface = () => {
     }
 
     // Update user progress
-    updateProgress(isCorrect);
+    await updateProgress(isCorrect);
   };
 
   const updateProgress = async (isCorrect: boolean) => {
@@ -79,7 +87,7 @@ const QuizInterface = () => {
         correct_answers: isCorrect ? 1 : 0,
         total_study_time: Math.ceil((30 - timeLeft) / 60),
         streak_days: 1,
-        user_id: null // For now, anonymous users
+        user_id: null
       });
     } catch (error) {
       console.error('Error updating progress:', error);
@@ -106,7 +114,7 @@ const QuizInterface = () => {
         total_questions: questions.length,
         time_taken: (questions.length * 30) - timeLeft,
         subject: questions[0]?.subject || 'Mixed',
-        user_id: null // For now, anonymous users
+        user_id: null
       });
     } catch (error) {
       console.error('Error saving quiz attempt:', error);
@@ -129,24 +137,31 @@ const QuizInterface = () => {
   if (loading) {
     return (
       <Card className="max-w-2xl mx-auto">
-        <CardContent className="pt-6 text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading questions...</p>
+        <CardContent className="pt-6 text-center space-y-4">
+          <LoadingSpinner size="lg" className="mx-auto" />
+          <p className="text-muted-foreground">Loading quiz questions...</p>
         </CardContent>
       </Card>
     );
   }
 
+  if (error) {
+    return (
+      <ErrorMessage 
+        title="Failed to Load Quiz"
+        message={error}
+        onRetry={loadQuestions}
+      />
+    );
+  }
+
   if (questions.length === 0) {
     return (
-      <Card className="max-w-2xl mx-auto">
-        <CardContent className="pt-6 text-center">
-          <p className="text-muted-foreground">No questions available. Please try again later.</p>
-          <Button onClick={loadQuestions} className="mt-4">
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
+      <ErrorMessage 
+        title="No Questions Available"
+        message="We couldn't find any questions for the quiz. Please try again later."
+        onRetry={loadQuestions}
+      />
     );
   }
 

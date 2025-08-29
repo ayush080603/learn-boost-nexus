@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { RotateCcw, ThumbsUp, ThumbsDown, Brain, BookOpen, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { dataService } from "@/services/dataService";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Flashcard {
   id: number;
@@ -25,6 +26,7 @@ const FlashcardMode = () => {
     incorrect: 0,
     total: 0
   });
+  const [loading, setLoading] = useState(false);
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([
     {
@@ -83,6 +85,7 @@ const FlashcardMode = () => {
 
   const loadFlashcardProgress = async () => {
     try {
+      setLoading(true);
       const progress = await dataService.getFlashcardProgress();
       const updatedCards = flashcards.map(card => {
         const cardProgress = progress.find(p => p.card_id === card.id.toString());
@@ -91,6 +94,9 @@ const FlashcardMode = () => {
       setFlashcards(updatedCards);
     } catch (error) {
       console.error('Error loading flashcard progress:', error);
+      toast.error("Failed to load progress data");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,10 +133,11 @@ const FlashcardMode = () => {
         card_id: currentFlashcard.id.toString(),
         learned: isCorrect,
         review_count: 1,
-        user_id: null // For now, anonymous users
+        user_id: null
       });
     } catch (error) {
       console.error('Error saving flashcard progress:', error);
+      toast.error("Failed to save progress");
     }
 
     nextCard();
@@ -141,7 +148,8 @@ const FlashcardMode = () => {
       setCurrentCard(currentCard + 1);
       setIsFlipped(false);
     } else {
-      toast.success(`Study session complete! You've learned ${learnedCount + 1} out of ${flashcards.length} cards.`);
+      const finalLearnedCount = flashcards.filter(card => card.learned).length;
+      toast.success(`Study session complete! You've learned ${finalLearnedCount} out of ${flashcards.length} cards.`);
       setCurrentCard(0);
       setIsFlipped(false);
     }
@@ -155,6 +163,17 @@ const FlashcardMode = () => {
     setFlashcards(resetCards);
     toast.success("Study session reset!");
   };
+
+  if (loading) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardContent className="pt-6 text-center space-y-4">
+          <LoadingSpinner size="lg" className="mx-auto" />
+          <p className="text-muted-foreground">Loading flashcards...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
