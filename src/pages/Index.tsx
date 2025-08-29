@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,9 +7,29 @@ import { BookOpen, Brain, BarChart3, Target, Users, Trophy, Play, CreditCard } f
 import QuizInterface from "@/components/QuizInterface";
 import FlashcardMode from "@/components/FlashcardMode";
 import Dashboard from "@/components/Dashboard";
+import { dataService } from "@/services/dataService";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [stats, setStats] = useState({
+    activeUsers: "10K+",
+    completionRate: "94%",
+    averageImprovement: "+23%"
+  });
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const realStats = await dataService.getStats();
+      setStats(realStats);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+      // Keep default stats if error occurs
+    }
+  };
 
   const features = [
     {
@@ -35,10 +54,10 @@ const Index = () => {
     },
   ];
 
-  const stats = [
-    { label: "Active Learners", value: "10K+", icon: Users },
-    { label: "Quiz Completion Rate", value: "94%", icon: Target },
-    { label: "Average Score Improvement", value: "+23%", icon: Trophy },
+  const statsData = [
+    { label: "Active Learners", value: stats.activeUsers, icon: Users },
+    { label: "Quiz Completion Rate", value: stats.completionRate, icon: Target },
+    { label: "Average Score Improvement", value: stats.averageImprovement, icon: Trophy },
   ];
 
   return (
@@ -96,7 +115,7 @@ const Index = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {stats.map((stat, index) => (
+              {statsData.map((stat, index) => (
                 <Card key={index} className="text-center bg-gradient-to-br from-primary/5 to-blue-500/5">
                   <CardContent className="pt-6">
                     <stat.icon className="w-8 h-8 mx-auto text-primary mb-4" />

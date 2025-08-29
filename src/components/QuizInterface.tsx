@@ -1,69 +1,49 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Clock, Brain, Trophy } from "lucide-react";
 import { toast } from "sonner";
-
-interface Question {
-  id: number;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  subject: string;
-}
+import { dataService, Question } from "@/services/dataService";
 
 const QuizInterface = () => {
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [quizComplete, setQuizComplete] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const questions: Question[] = [
-    {
-      id: 1,
-      question: "What is the main purpose of React hooks?",
-      options: [
-        "To replace class components entirely",
-        "To manage state and lifecycle in functional components",
-        "To improve performance only",
-        "To handle routing"
-      ],
-      correctAnswer: 1,
-      explanation: "React hooks allow you to use state and other React features in functional components without writing a class.",
-      difficulty: "Medium",
-      subject: "React"
-    },
-    {
-      id: 2,
-      question: "Which HTTP method is idempotent?",
-      options: ["POST", "PUT", "PATCH", "DELETE"],
-      correctAnswer: 1,
-      explanation: "PUT is idempotent because making the same PUT request multiple times will have the same effect as making it once.",
-      difficulty: "Hard",
-      subject: "Web Development"
-    },
-    {
-      id: 3,
-      question: "What does SQL stand for?",
-      options: [
-        "Structured Query Language",
-        "Simple Query Language",
-        "Standard Query Language",
-        "Sequential Query Language"
-      ],
-      correctAnswer: 0,
-      explanation: "SQL stands for Structured Query Language, used for managing relational databases.",
-      difficulty: "Easy",
-      subject: "Database"
+  useEffect(() => {
+    loadQuestions();
+  }, []);
+
+  useEffect(() => {
+    if (!showResult && !quizComplete && timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && !showResult) {
+      handleSubmitAnswer();
     }
-  ];
+  }, [timeLeft, showResult, quizComplete]);
+
+  const loadQuestions = async () => {
+    try {
+      const fetchedQuestions = await dataService.getQuestions(10);
+      if (fetchedQuestions.length > 0) {
+        setQuestions(fetchedQuestions);
+      }
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      toast.error("Failed to load questions");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (showResult) return;
@@ -71,18 +51,38 @@ const QuizInterface = () => {
   };
 
   const handleSubmitAnswer = () => {
-    if (selectedAnswer === null) {
+    if (selectedAnswer === null && timeLeft > 0) {
       toast.error("Please select an answer first!");
       return;
     }
 
     setShowResult(true);
     
-    if (selectedAnswer === questions[currentQuestion].correctAnswer) {
+    const isCorrect = selectedAnswer === questions[currentQuestion].correct_answer;
+    if (isCorrect) {
       setScore(score + 1);
       toast.success("Correct! Well done! 🎉");
     } else {
       toast.error("Incorrect. Check the explanation below.");
+    }
+
+    // Update user progress
+    updateProgress(isCorrect);
+  };
+
+  const updateProgress = async (isCorrect: boolean) => {
+    try {
+      const currentQ = questions[currentQuestion];
+      await dataService.updateUserProgress({
+        subject: currentQ.subject,
+        questions_answered: 1,
+        correct_answers: isCorrect ? 1 : 0,
+        total_study_time: Math.ceil((30 - timeLeft) / 60),
+        streak_days: 1,
+        user_id: null // For now, anonymous users
+      });
+    } catch (error) {
+      console.error('Error updating progress:', error);
     }
   };
 
@@ -93,9 +93,27 @@ const QuizInterface = () => {
       setShowResult(false);
       setTimeLeft(30);
     } else {
-      setQuizComplete(true);
-      toast.success(`Quiz completed! Your score: ${score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 1 : 0)}/${questions.length}`);
+      finishQuiz();
     }
+  };
+
+  const finishQuiz = async () => {
+    const finalScore = score + (selectedAnswer === questions[currentQuestion].correct_answer ? 1 : 0);
+    
+    try {
+      await dataService.saveQuizAttempt({
+        score: finalScore,
+        total_questions: questions.length,
+        time_taken: (questions.length * 30) - timeLeft,
+        subject: questions[0]?.subject || 'Mixed',
+        user_id: null // For now, anonymous users
+      });
+    } catch (error) {
+      console.error('Error saving quiz attempt:', error);
+    }
+
+    setQuizComplete(true);
+    toast.success(`Quiz completed! Your score: ${finalScore}/${questions.length}`);
   };
 
   const resetQuiz = () => {
@@ -105,13 +123,38 @@ const QuizInterface = () => {
     setScore(0);
     setTimeLeft(30);
     setQuizComplete(false);
+    loadQuestions();
   };
+
+  if (loading) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardContent className="pt-6 text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading questions...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardContent className="pt-6 text-center">
+          <p className="text-muted-foreground">No questions available. Please try again later.</p>
+          <Button onClick={loadQuestions} className="mt-4">
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const currentQ = questions[currentQuestion];
   const progressPercentage = ((currentQuestion + 1) / questions.length) * 100;
 
   if (quizComplete) {
-    const finalScore = score + (selectedAnswer === questions[currentQuestion].correctAnswer ? 1 : 0);
+    const finalScore = score + (selectedAnswer === questions[currentQuestion].correct_answer ? 1 : 0);
     const percentage = Math.round((finalScore / questions.length) * 100);
     
     return (
@@ -162,7 +205,7 @@ const QuizInterface = () => {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-2xl font-bold">Interactive Quiz</h2>
-          <p className="text-muted-foreground">Test your knowledge and track your progress</p>
+          <p className="text-muted-foreground">Test your knowledge with {questions.length} questions</p>
         </div>
         <Badge variant="outline" className="flex items-center gap-2">
           <Clock className="w-4 h-4" />
@@ -195,9 +238,9 @@ const QuizInterface = () => {
                 key={index}
                 variant={selectedAnswer === index ? "default" : "outline"}
                 className={`justify-start h-auto p-4 text-left whitespace-normal ${
-                  showResult && index === currentQ.correctAnswer
+                  showResult && index === currentQ.correct_answer
                     ? "bg-green-500/20 border-green-500 text-green-700"
-                    : showResult && selectedAnswer === index && index !== currentQ.correctAnswer
+                    : showResult && selectedAnswer === index && index !== currentQ.correct_answer
                     ? "bg-red-500/20 border-red-500 text-red-700"
                     : ""
                 }`}
@@ -209,10 +252,10 @@ const QuizInterface = () => {
                     {String.fromCharCode(65 + index)}
                   </span>
                   <span className="flex-1">{option}</span>
-                  {showResult && index === currentQ.correctAnswer && (
+                  {showResult && index === currentQ.correct_answer && (
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   )}
-                  {showResult && selectedAnswer === index && index !== currentQ.correctAnswer && (
+                  {showResult && selectedAnswer === index && index !== currentQ.correct_answer && (
                     <XCircle className="w-5 h-5 text-red-600" />
                   )}
                 </div>

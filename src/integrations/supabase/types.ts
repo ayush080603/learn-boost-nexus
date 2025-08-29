@@ -14,7 +14,141 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      flashcard_progress: {
+        Row: {
+          card_id: string
+          created_at: string
+          id: string
+          last_reviewed: string | null
+          learned: boolean
+          review_count: number
+          user_id: string | null
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          id?: string
+          last_reviewed?: string | null
+          learned?: boolean
+          review_count?: number
+          user_id?: string | null
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          id?: string
+          last_reviewed?: string | null
+          learned?: boolean
+          review_count?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          correct_answer: number
+          created_at: string
+          difficulty: string
+          explanation: string
+          id: string
+          options: Json
+          question: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string
+          difficulty: string
+          explanation: string
+          id?: string
+          options: Json
+          question: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string
+          difficulty?: string
+          explanation?: string
+          id?: string
+          options?: Json
+          question?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          completed_at: string
+          id: string
+          score: number
+          subject: string | null
+          time_taken: number | null
+          total_questions: number
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          score?: number
+          subject?: string | null
+          time_taken?: number | null
+          total_questions: number
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          score?: number
+          subject?: string | null
+          time_taken?: number | null
+          total_questions?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          correct_answers: number
+          created_at: string
+          id: string
+          last_study_date: string | null
+          questions_answered: number
+          streak_days: number
+          subject: string
+          total_study_time: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          last_study_date?: string | null
+          questions_answered?: number
+          streak_days?: number
+          subject: string
+          total_study_time?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          last_study_date?: string | null
+          questions_answered?: number
+          streak_days?: number
+          subject?: string
+          total_study_time?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

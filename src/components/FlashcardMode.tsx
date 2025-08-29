@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RotateCcw, ThumbsUp, ThumbsDown, Brain, BookOpen, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { dataService } from "@/services/dataService";
 
 interface Flashcard {
   id: number;
@@ -57,8 +58,41 @@ const FlashcardMode = () => {
       difficulty: "Medium",
       subject: "Web Development",
       learned: false
+    },
+    {
+      id: 5,
+      front: "What is the Virtual DOM?",
+      back: "The Virtual DOM is a JavaScript representation of the real DOM. React uses it to optimize rendering by comparing the virtual DOM with the previous version and only updating the parts that have changed.",
+      difficulty: "Medium",
+      subject: "React",
+      learned: false
+    },
+    {
+      id: 6,
+      front: "What is async/await in JavaScript?",
+      back: "async/await is a syntax that makes it easier to work with Promises. The async keyword makes a function return a Promise, and await pauses the function execution until the Promise resolves.",
+      difficulty: "Medium",
+      subject: "JavaScript",
+      learned: false
     }
   ]);
+
+  useEffect(() => {
+    loadFlashcardProgress();
+  }, []);
+
+  const loadFlashcardProgress = async () => {
+    try {
+      const progress = await dataService.getFlashcardProgress();
+      const updatedCards = flashcards.map(card => {
+        const cardProgress = progress.find(p => p.card_id === card.id.toString());
+        return cardProgress ? { ...card, learned: cardProgress.learned } : card;
+      });
+      setFlashcards(updatedCards);
+    } catch (error) {
+      console.error('Error loading flashcard progress:', error);
+    }
+  };
 
   const currentFlashcard = flashcards[currentCard];
   const progressPercentage = ((currentCard + 1) / flashcards.length) * 100;
@@ -68,7 +102,7 @@ const FlashcardMode = () => {
     setIsFlipped(!isFlipped);
   };
 
-  const handleCardResult = (isCorrect: boolean) => {
+  const handleCardResult = async (isCorrect: boolean) => {
     if (!isFlipped) {
       toast.error("Please flip the card first to see the answer!");
       return;
@@ -86,6 +120,19 @@ const FlashcardMode = () => {
     }
     
     setFlashcards(newFlashcards);
+
+    // Save progress to database
+    try {
+      await dataService.updateFlashcardProgress({
+        card_id: currentFlashcard.id.toString(),
+        learned: isCorrect,
+        review_count: 1,
+        user_id: null // For now, anonymous users
+      });
+    } catch (error) {
+      console.error('Error saving flashcard progress:', error);
+    }
+
     nextCard();
   };
 
@@ -95,7 +142,6 @@ const FlashcardMode = () => {
       setIsFlipped(false);
     } else {
       toast.success(`Study session complete! You've learned ${learnedCount + 1} out of ${flashcards.length} cards.`);
-      // Reset to first card
       setCurrentCard(0);
       setIsFlipped(false);
     }
