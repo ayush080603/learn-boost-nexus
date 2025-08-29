@@ -59,7 +59,8 @@ export const dataService = {
     
     return data?.map(q => ({
       ...q,
-      options: Array.isArray(q.options) ? q.options : JSON.parse(q.options as string)
+      options: Array.isArray(q.options) ? q.options : JSON.parse(q.options as string),
+      difficulty: q.difficulty as "Easy" | "Medium" | "Hard"
     })) || [];
   },
 
