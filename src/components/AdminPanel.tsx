@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,12 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Edit, Trash2, Users, BookOpen, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { dataService } from '@/services/dataService';
+import { fetchQuestions, createQuestion, Question } from '@/services/dataService';
 import LoadingSpinner from './LoadingSpinner';
 
 const AdminPanel = () => {
   const { isAdmin } = useAuth();
-  const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -40,7 +39,7 @@ const AdminPanel = () => {
   const loadQuestions = async () => {
     try {
       setLoading(true);
-      const data = await dataService.getQuestions();
+      const data = await fetchQuestions();
       setQuestions(data);
     } catch (err) {
       setError('Failed to load questions');
@@ -55,8 +54,7 @@ const AdminPanel = () => {
       setLoading(true);
       setError('');
       
-      // Here you would typically call an API to add the question
-      // For now, we'll just show success message
+      await createQuestion(formData);
       setSuccess('Question added successfully!');
       
       // Reset form
@@ -264,7 +262,7 @@ const AdminPanel = () => {
                 <p className="text-center text-muted-foreground">No questions found</p>
               ) : (
                 <div className="space-y-4">
-                  {questions.map((q: any, index) => (
+                  {questions.map((q: Question, index) => (
                     <div key={q.id} className="border rounded-lg p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">

@@ -34,6 +34,31 @@ export interface UserProgress {
   last_study_date?: string;
 }
 
+export interface FlashcardProgress {
+  id?: string;
+  card_id: string;
+  learned: boolean;
+  review_count: number;
+  user_id?: string;
+  last_reviewed?: string;
+}
+
+// Helper function to convert Json to string array for options
+const convertOptionsFromJson = (options: any): string[] => {
+  if (Array.isArray(options)) {
+    return options;
+  }
+  if (typeof options === 'string') {
+    try {
+      const parsed = JSON.parse(options);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 // Questions API
 export const fetchQuestions = async (subject?: string): Promise<Question[]> => {
   let query = supabase.from('questions').select('*');
@@ -49,13 +74,19 @@ export const fetchQuestions = async (subject?: string): Promise<Question[]> => {
     throw error;
   }
   
-  return data || [];
+  return (data || []).map(item => ({
+    ...item,
+    options: convertOptionsFromJson(item.options)
+  }));
 };
 
 export const createQuestion = async (question: Omit<Question, 'id' | 'created_at' | 'updated_at'>): Promise<Question> => {
   const { data, error } = await supabase
     .from('questions')
-    .insert([question])
+    .insert([{
+      ...question,
+      options: JSON.stringify(question.options)
+    }])
     .select()
     .single();
   
@@ -64,13 +95,20 @@ export const createQuestion = async (question: Omit<Question, 'id' | 'created_at
     throw error;
   }
   
-  return data;
+  return {
+    ...data,
+    options: convertOptionsFromJson(data.options)
+  };
 };
 
 export const updateQuestion = async (id: string, updates: Partial<Question>): Promise<Question> => {
+  const updateData = updates.options 
+    ? { ...updates, options: JSON.stringify(updates.options) }
+    : updates;
+
   const { data, error } = await supabase
     .from('questions')
-    .update(updates)
+    .update(updateData)
     .eq('id', id)
     .select()
     .single();
@@ -80,7 +118,10 @@ export const updateQuestion = async (id: string, updates: Partial<Question>): Pr
     throw error;
   }
   
-  return data;
+  return {
+    ...data,
+    options: convertOptionsFromJson(data.options)
+  };
 };
 
 export const deleteQuestion = async (id: string): Promise<void> => {
@@ -129,8 +170,12 @@ export const fetchQuizAttempts = async (userId?: string): Promise<QuizAttempt[]>
 };
 
 // User progress API
-export const fetchUserProgress = async (userId: string, subject?: string): Promise<UserProgress[]> => {
-  let query = supabase.from('user_progress').select('*').eq('user_id', userId);
+export const fetchUserProgress = async (userId?: string, subject?: string): Promise<UserProgress[]> => {
+  let query = supabase.from('user_progress').select('*');
+  
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
   
   if (subject) {
     query = query.eq('subject', subject);
@@ -161,9 +206,41 @@ export const updateUserProgress = async (progress: Omit<UserProgress, 'id' | 'cr
   return data;
 };
 
+// Flashcard progress API
+export const fetchFlashcardProgress = async (userId?: string): Promise<FlashcardProgress[]> => {
+  let query = supabase.from('flashcard_progress').select('*');
+  
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error('Error fetching flashcard progress:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
+
+export const updateFlashcardProgress = async (progress: Omit<FlashcardProgress, 'id' | 'created_at'>): Promise<FlashcardProgress> => {
+  const { data, error } = await supabase
+    .from('flashcard_progress')
+    .upsert([progress], { onConflict: 'user_id,card_id' })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating flashcard progress:', error);
+    throw error;
+  }
+  
+  return data;
+};
+
 // Admin API
 export const makeUserAdmin = async (email: string): Promise<void> => {
-  // First get the user ID from the profiles table
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id')
@@ -175,7 +252,6 @@ export const makeUserAdmin = async (email: string): Promise<void> => {
     throw new Error('User not found');
   }
 
-  // Insert admin role for the user
   const { error } = await supabase
     .from('user_roles')
     .upsert([{ user_id: profile.id, role: 'admin' }], { onConflict: 'user_id,role' });
@@ -185,3 +261,30 @@ export const makeUserAdmin = async (email: string): Promise<void> => {
     throw error;
   }
 };
+
+// Default export as dataService object for backward compatibility
+const dataService = {
+  // Questions
+  getQuestions: fetchQuestions,
+  createQuestion,
+  updateQuestion,
+  deleteQuestion,
+  
+  // Quiz attempts
+  saveQuizAttempt,
+  getQuizAttempts: fetchQuizAttempts,
+  
+  // User progress
+  getUserProgress: fetchUserProgress,
+  updateUserProgress,
+  
+  // Flashcard progress
+  getFlashcardProgress: fetchFlashcardProgress,
+  updateFlashcardProgress,
+  
+  // Admin functions
+  makeUserAdmin
+};
+
+export default dataService;
+export { dataService };

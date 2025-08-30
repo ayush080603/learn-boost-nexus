@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown, Target, Clock, Brain, Trophy, BookOpen, Zap } from "lucide-react";
-import { dataService } from "@/services/dataService";
+import { fetchQuizAttempts, fetchUserProgress, fetchFlashcardProgress } from "@/services/dataService";
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
@@ -37,9 +36,9 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     try {
       const [quizAttempts, userProgress, flashcardProgress] = await Promise.all([
-        dataService.getQuizAttempts(),
-        dataService.getUserProgress(),
-        dataService.getFlashcardProgress()
+        fetchQuizAttempts(),
+        fetchUserProgress(),
+        fetchFlashcardProgress()
       ]);
 
       // Calculate subject performance

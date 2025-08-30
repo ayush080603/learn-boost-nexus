@@ -1,292 +1,297 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Brain, BarChart3, Target, Users, Trophy, Play, CreditCard, Sparkles, LogIn, Settings } from "lucide-react";
+import { Play, BookOpen, BarChart3, Users, Settings, Brain, Target, Trophy, Zap } from "lucide-react";
 import QuizInterface from "@/components/QuizInterface";
 import FlashcardMode from "@/components/FlashcardMode";
 import Dashboard from "@/components/Dashboard";
 import AdminPanel from "@/components/AdminPanel";
 import UserMenu from "@/components/UserMenu";
-import { dataService } from "@/services/dataService";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import { useAuth } from "@/hooks/useAuth";
+import { makeUserAdmin } from "@/services/dataService";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [stats, setStats] = useState({
-    activeUsers: "10K+",
-    completionRate: "94%",
-    averageImprovement: "+23%"
-  });
-  const [statsLoading, setStatsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const [activeMode, setActiveMode] = useState<'home' | 'quiz' | 'flashcards' | 'dashboard' | 'admin'>('home');
+  const { user, isAdmin } = useAuth();
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  const stats = [
+    { icon: Brain, label: "Active Learners", value: "2,847", color: "text-blue-600" },
+    { icon: Target, label: "Questions Solved", value: "45,291", color: "text-green-600" },
+    { icon: Trophy, label: "Completion Rate", value: "87%", color: "text-purple-600" },
+    { icon: Zap, label: "Average Score", value: "78%", color: "text-orange-600" }
+  ];
 
-  const loadStats = async () => {
-    try {
-      setStatsLoading(true);
-      const realStats = await dataService.getStats();
-      setStats(realStats);
-    } catch (error) {
-      console.error('Error loading stats:', error);
-    } finally {
-      setStatsLoading(false);
+  const features = [
+    {
+      icon: Play,
+      title: "Interactive Quizzes",
+      description: "Test your knowledge with timed quizzes across multiple subjects",
+      badge: "Popular"
+    },
+    {
+      icon: BookOpen,
+      title: "Flashcard Learning",
+      description: "Master concepts with spaced repetition and active recall techniques",
+      badge: "New"
+    },
+    {
+      icon: BarChart3,
+      title: "Progress Analytics",
+      description: "Track your learning journey with detailed performance insights",
+      badge: "Pro"
+    },
+    {
+      icon: Users,
+      title: "Study Groups",
+      description: "Collaborate with peers and share knowledge in study communities",
+      badge: "Coming Soon"
     }
-  };
+  ];
 
-  // Show loading spinner while auth is loading
-  if (authLoading) {
+  if (activeMode === 'quiz') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Button 
+                variant="ghost" 
+                onClick={() => setActiveMode('home')}
+                className="font-bold text-xl"
+              >
+                ← LearnHub
+              </Button>
+              <UserMenu />
+            </div>
+          </div>
+        </nav>
+        <div className="container mx-auto px-4 py-8">
+          <QuizInterface />
+        </div>
       </div>
     );
   }
 
-  const features = [
-    {
-      icon: Brain,
-      title: "Interactive Quizzes",
-      description: "Multiple choice questions with instant feedback and detailed explanations",
-    },
-    {
-      icon: CreditCard,
-      title: "Smart Flashcards",
-      description: "Spaced repetition algorithm helps you learn more efficiently and retain knowledge",
-    },
-    {
-      icon: BarChart3,
-      title: "Performance Analytics",
-      description: "Track your progress with detailed charts and insights into your learning patterns",
-    },
-    {
-      icon: Target,
-      title: "Personalized Learning",
-      description: "Adaptive difficulty and subject-focused content to match your learning goals",
-    },
-  ];
+  if (activeMode === 'flashcards') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+        <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Button 
+                variant="ghost" 
+                onClick={() => setActiveMode('home')}
+                className="font-bold text-xl"
+              >
+                ← LearnHub
+              </Button>
+              <UserMenu />
+            </div>
+          </div>
+        </nav>
+        <div className="container mx-auto px-4 py-8">
+          <FlashcardMode />
+        </div>
+      </div>
+    );
+  }
 
-  const statsData = [
-    { label: "Active Learners", value: stats.activeUsers, icon: Users },
-    { label: "Quiz Completion Rate", value: stats.completionRate, icon: Target },
-    { label: "Average Score Improvement", value: stats.averageImprovement, icon: Trophy },
-  ];
+  if (activeMode === 'dashboard') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
+        <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Button 
+                variant="ghost" 
+                onClick={() => setActiveMode('home')}
+                className="font-bold text-xl"
+              >
+                ← LearnHub
+              </Button>
+              <UserMenu />
+            </div>
+          </div>
+        </nav>
+        <div className="container mx-auto px-4 py-8">
+          <Dashboard />
+        </div>
+      </div>
+    );
+  }
+
+  if (activeMode === 'admin') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50">
+        <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Button 
+                variant="ghost" 
+                onClick={() => setActiveMode('home')}
+                className="font-bold text-xl"
+              >
+                ← LearnHub
+              </Button>
+              <UserMenu />
+            </div>
+          </div>
+        </nav>
+        <div className="container mx-auto px-4 py-8">
+          <AdminPanel />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with Authentication */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-primary" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-              LearnBoost Nexus
-            </h1>
-            <Sparkles className="w-8 h-8 text-primary" />
-          </div>
-          
-          <div className="flex items-center gap-4">
-            {user ? (
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="hidden sm:flex">
-                  Welcome, {user.email}
-                </Badge>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Navigation */}
+      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-8">
+              <h1 className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                LearnHub
+              </h1>
+              <div className="hidden md:flex space-x-6">
+                <Button variant="ghost" onClick={() => setActiveMode('quiz')}>
+                  <Play className="w-4 h-4 mr-2" />
+                  Quiz
+                </Button>
+                <Button variant="ghost" onClick={() => setActiveMode('flashcards')}>
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Flashcards
+                </Button>
+                {user && (
+                  <Button variant="ghost" onClick={() => setActiveMode('dashboard')}>
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Analytics
+                  </Button>
+                )}
                 {isAdmin && (
-                  <Badge variant="outline" className="text-primary border-primary">
+                  <Button variant="ghost" onClick={() => setActiveMode('admin')}>
+                    <Settings className="w-4 h-4 mr-2" />
                     Admin
+                  </Button>
+                )}
+              </div>
+            </div>
+            <UserMenu />
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative py-20 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <Badge variant="secondary" className="mb-6">
+            ✨ B.Tech Final Year Project by Ayush Sinha
+          </Badge>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Master Your Skills with
+            <br />Interactive Learning
+          </h1>
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+            Elevate your knowledge with our comprehensive platform featuring quizzes, flashcards, 
+            and detailed analytics. Perfect for students, professionals, and lifelong learners.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" onClick={() => setActiveMode('quiz')} className="text-lg px-8 py-6">
+              <Play className="w-5 h-5 mr-2" />
+              Start Learning Now
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => setActiveMode('flashcards')} className="text-lg px-8 py-6">
+              <BookOpen className="w-5 h-5 mr-2" />
+              Try Flashcards
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 px-4 bg-white/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <stat.icon className={`w-12 h-12 mx-auto mb-4 ${stat.color}`} />
+                <div className="text-3xl font-bold mb-2">{stat.value}</div>
+                <div className="text-muted-foreground">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">Powerful Learning Features</h2>
+            <p className="text-xl text-muted-foreground">
+              Everything you need to accelerate your learning journey
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+                {feature.badge && (
+                  <Badge 
+                    variant={feature.badge === "Popular" ? "default" : "secondary"} 
+                    className="absolute top-4 right-4 z-10"
+                  >
+                    {feature.badge}
                   </Badge>
                 )}
-                <UserMenu />
-              </div>
-            ) : (
-              <Button onClick={() => navigate('/auth')} className="flex items-center gap-2">
-                <LogIn className="w-4 h-4" />
-                Sign In
+                <CardHeader>
+                  <feature.icon className="w-12 h-12 text-primary mb-4" />
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-6">Ready to Transform Your Learning?</h2>
+          <p className="text-xl mb-8 opacity-90">
+            Join thousands of learners who are already mastering new skills with our platform.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" variant="secondary" onClick={() => setActiveMode('quiz')} className="text-lg px-8 py-6">
+              Start Your First Quiz
+            </Button>
+            {user && (
+              <Button size="lg" variant="outline" onClick={() => setActiveMode('dashboard')} className="text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-purple-600">
+                View Your Progress
               </Button>
             )}
           </div>
         </div>
+      </section>
 
-        <div className="text-center mb-8">
-          <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
-            Your AI-Powered Learning Platform with Interactive Quizzes, Smart Flashcards & Real-time Analytics
+      {/* Footer */}
+      <footer className="py-12 px-4 bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto text-center">
+          <h3 className="text-2xl font-bold mb-4">LearnHub</h3>
+          <p className="text-gray-400 mb-6">
+            Empowering learners worldwide with interactive education technology.
           </p>
-          <div className="flex gap-2 justify-center flex-wrap mb-8">
-            <Badge variant="secondary" className="px-3 py-1">🎯 Adaptive Learning</Badge>
-            <Badge variant="secondary" className="px-3 py-1">📊 Real-time Analytics</Badge>
-            <Badge variant="secondary" className="px-3 py-1">🧠 Memory Enhancement</Badge>
-            <Badge variant="secondary" className="px-3 py-1">⚡ Instant Feedback</Badge>
-          </div>
+          <p className="text-sm text-gray-500">
+            © 2024 LearnHub - B.Tech Final Year Project by Ayush Sinha. All rights reserved.
+          </p>
         </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} mb-8`}>
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="quiz" className="flex items-center gap-2">
-              <Play className="w-4 h-4" />
-              <span className="hidden sm:inline">Quiz Mode</span>
-            </TabsTrigger>
-            <TabsTrigger value="flashcards" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">Flashcards</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Analytics</span>
-            </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger value="admin" className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Admin</span>
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature, index) => (
-                <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/20">
-                  <CardHeader className="text-center">
-                    <feature.icon className="w-12 h-12 mx-auto text-primary mb-4" />
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {statsData.map((stat, index) => (
-                <Card key={index} className="text-center bg-gradient-to-br from-primary/5 to-blue-500/5 border-2">
-                  <CardContent className="pt-6">
-                    <stat.icon className="w-8 h-8 mx-auto text-primary mb-4" />
-                    <div className="text-3xl font-bold text-primary mb-2">
-                      {statsLoading ? <LoadingSpinner size="sm" className="mx-auto" /> : stat.value}
-                    </div>
-                    <p className="text-muted-foreground">{stat.label}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Card className="bg-gradient-to-r from-primary/10 to-blue-500/10 border-2 border-primary/20">
-              <CardContent className="pt-8 pb-8">
-                <div className="text-center">
-                  <h3 className="text-2xl font-semibold mb-4">Ready to Start Learning?</h3>
-                  <p className="text-muted-foreground mb-6 text-lg">
-                    Join thousands of students improving their knowledge with our interactive platform
-                  </p>
-                  <div className="flex gap-4 justify-center flex-wrap">
-                    <Button onClick={() => setActiveTab("quiz")} size="lg" className="px-8">
-                      <Play className="w-5 h-5 mr-2" />
-                      Start Quiz
-                    </Button>
-                    <Button onClick={() => setActiveTab("flashcards")} variant="outline" size="lg" className="px-8">
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Study Flashcards
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-4">
-                    {user ? "Continue your learning journey!" : "No registration required - start learning immediately!"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-primary" />
-                    Quick Facts
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Question Bank:</span>
-                    <span className="font-medium">10+ Questions Ready</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subjects Available:</span>
-                    <span className="font-medium">React, SQL, JavaScript, CSS</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Difficulty Levels:</span>
-                    <span className="font-medium">Easy, Medium, Hard</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Study Modes:</span>
-                    <span className="font-medium">Quiz & Flashcards</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-primary" />
-                    Learning Features
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Instant feedback on answers</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Detailed explanations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Progress tracking</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Timed challenges</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Performance analytics</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="quiz">
-            <QuizInterface />
-          </TabsContent>
-
-          <TabsContent value="flashcards">
-            <FlashcardMode />
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <Dashboard />
-          </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="admin">
-              <AdminPanel />
-            </TabsContent>
-          )}
-        </Tabs>
-      </div>
+      </footer>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RotateCcw, ThumbsUp, ThumbsDown, Brain, BookOpen, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { dataService } from "@/services/dataService";
+import { fetchFlashcardProgress, updateFlashcardProgress } from "@/services/dataService";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Flashcard {
@@ -86,7 +85,7 @@ const FlashcardMode = () => {
   const loadFlashcardProgress = async () => {
     try {
       setLoading(true);
-      const progress = await dataService.getFlashcardProgress();
+      const progress = await fetchFlashcardProgress();
       const updatedCards = flashcards.map(card => {
         const cardProgress = progress.find(p => p.card_id === card.id.toString());
         return cardProgress ? { ...card, learned: cardProgress.learned } : card;
@@ -129,7 +128,7 @@ const FlashcardMode = () => {
 
     // Save progress to database
     try {
-      await dataService.updateFlashcardProgress({
+      await updateFlashcardProgress({
         card_id: currentFlashcard.id.toString(),
         learned: isCorrect,
         review_count: 1,

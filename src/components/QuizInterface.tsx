@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Clock, Brain, Trophy } from "lucide-react";
 import { toast } from "sonner";
-import { dataService, Question } from "@/services/dataService";
+import { fetchQuestions, saveQuizAttempt, updateUserProgress, Question } from "@/services/dataService";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 
@@ -38,9 +37,11 @@ const QuizInterface = () => {
     try {
       setLoading(true);
       setError(null);
-      const fetchedQuestions = await dataService.getQuestions(10);
+      const fetchedQuestions = await fetchQuestions();
       if (fetchedQuestions.length > 0) {
-        setQuestions(fetchedQuestions);
+        // Shuffle and take first 10 questions
+        const shuffled = fetchedQuestions.sort(() => 0.5 - Math.random());
+        setQuestions(shuffled.slice(0, 10));
       } else {
         setError("No questions are available at the moment. Please try again later.");
       }
@@ -81,7 +82,7 @@ const QuizInterface = () => {
   const updateProgress = async (isCorrect: boolean) => {
     try {
       const currentQ = questions[currentQuestion];
-      await dataService.updateUserProgress({
+      await updateUserProgress({
         subject: currentQ.subject,
         questions_answered: 1,
         correct_answers: isCorrect ? 1 : 0,
@@ -109,7 +110,7 @@ const QuizInterface = () => {
     const finalScore = score + (selectedAnswer === questions[currentQuestion].correct_answer ? 1 : 0);
     
     try {
-      await dataService.saveQuizAttempt({
+      await saveQuizAttempt({
         score: finalScore,
         total_questions: questions.length,
         time_taken: (questions.length * 30) - timeLeft,
