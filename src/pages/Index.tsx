@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Brain, BarChart3, Target, Users, Trophy, Play, CreditCard, Sparkles } from "lucide-react";
+import { BookOpen, Brain, BarChart3, Target, Users, Trophy, Play, CreditCard, Sparkles, LogIn, Settings } from "lucide-react";
 import QuizInterface from "@/components/QuizInterface";
 import FlashcardMode from "@/components/FlashcardMode";
 import Dashboard from "@/components/Dashboard";
+import AdminPanel from "@/components/AdminPanel";
+import UserMenu from "@/components/UserMenu";
 import { dataService } from "@/services/dataService";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -18,6 +22,8 @@ const Index = () => {
     averageImprovement: "+23%"
   });
   const [statsLoading, setStatsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { user, loading: authLoading, isAdmin } = useAuth();
 
   useEffect(() => {
     loadStats();
@@ -30,11 +36,19 @@ const Index = () => {
       setStats(realStats);
     } catch (error) {
       console.error('Error loading stats:', error);
-      // Keep default stats if error occurs
     } finally {
       setStatsLoading(false);
     }
   };
+
+  // Show loading spinner while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const features = [
     {
@@ -68,14 +82,39 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
+        {/* Header with Authentication */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2">
             <Sparkles className="w-8 h-8 text-primary" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               LearnBoost Nexus
             </h1>
             <Sparkles className="w-8 h-8 text-primary" />
           </div>
+          
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="hidden sm:flex">
+                  Welcome, {user.email}
+                </Badge>
+                {isAdmin && (
+                  <Badge variant="outline" className="text-primary border-primary">
+                    Admin
+                  </Badge>
+                )}
+                <UserMenu />
+              </div>
+            ) : (
+              <Button onClick={() => navigate('/auth')} className="flex items-center gap-2">
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="text-center mb-8">
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
             Your AI-Powered Learning Platform with Interactive Quizzes, Smart Flashcards & Real-time Analytics
           </p>
@@ -88,7 +127,7 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} mb-8`}>
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -105,6 +144,12 @@ const Index = () => {
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="admin" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                <span className="hidden sm:inline">Admin</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8">
@@ -156,7 +201,7 @@ const Index = () => {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground mt-4">
-                    No registration required - start learning immediately!
+                    {user ? "Continue your learning journey!" : "No registration required - start learning immediately!"}
                   </p>
                 </div>
               </CardContent>
@@ -234,6 +279,12 @@ const Index = () => {
           <TabsContent value="analytics">
             <Dashboard />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="admin">
+              <AdminPanel />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
