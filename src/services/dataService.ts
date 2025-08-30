@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Question {
   id: string;
@@ -7,8 +7,10 @@ export interface Question {
   options: string[];
   correct_answer: number;
   explanation: string;
-  difficulty: "Easy" | "Medium" | "Hard";
+  difficulty: string;
   subject: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface QuizAttempt {
@@ -16,9 +18,9 @@ export interface QuizAttempt {
   user_id?: string;
   score: number;
   total_questions: number;
-  completed_at?: string;
-  time_taken?: number;
   subject?: string;
+  time_taken?: number;
+  completed_at?: string;
 }
 
 export interface UserProgress {
@@ -32,227 +34,154 @@ export interface UserProgress {
   last_study_date?: string;
 }
 
-export interface FlashcardProgress {
-  id?: string;
-  user_id?: string;
-  card_id: string;
-  learned: boolean;
-  review_count: number;
-  last_reviewed?: string;
-}
+// Questions API
+export const fetchQuestions = async (subject?: string): Promise<Question[]> => {
+  let query = supabase.from('questions').select('*');
+  
+  if (subject) {
+    query = query.eq('subject', subject);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error('Error fetching questions:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
 
-export const dataService = {
-  // Questions API
-  async getQuestions(limit?: number, subject?: string): Promise<Question[]> {
-    console.log('Fetching questions from API...', { limit, subject });
-    
-    let query = supabase.from('questions').select('*');
-    
-    if (subject) {
-      query = query.eq('subject', subject);
-    }
-    
-    if (limit) {
-      query = query.limit(limit);
-    }
-    
-    const { data, error } = await query;
-    if (error) {
-      console.error('Error fetching questions:', error);
-      throw error;
-    }
-    
-    const questions = data?.map(q => ({
-      ...q,
-      options: Array.isArray(q.options) ? q.options : JSON.parse(q.options as string),
-      difficulty: q.difficulty as "Easy" | "Medium" | "Hard"
-    })) || [];
-    
-    console.log(`Fetched ${questions.length} questions from API`);
-    return questions;
-  },
+export const createQuestion = async (question: Omit<Question, 'id' | 'created_at' | 'updated_at'>): Promise<Question> => {
+  const { data, error } = await supabase
+    .from('questions')
+    .insert([question])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error creating question:', error);
+    throw error;
+  }
+  
+  return data;
+};
 
-  async addQuestion(question: Omit<Question, 'id'>): Promise<void> {
-    console.log('Adding new question to API...', question);
-    
-    const { error } = await supabase.from('questions').insert([{
-      ...question,
-      options: JSON.stringify(question.options)
-    }]);
-    
-    if (error) {
-      console.error('Error adding question:', error);
-      throw error;
-    }
-    
-    console.log('Question added successfully');
-  },
+export const updateQuestion = async (id: string, updates: Partial<Question>): Promise<Question> => {
+  const { data, error } = await supabase
+    .from('questions')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating question:', error);
+    throw error;
+  }
+  
+  return data;
+};
 
-  async updateQuestion(id: string, question: Partial<Question>): Promise<void> {
-    console.log('Updating question via API...', { id, question });
-    
-    const updateData = { ...question };
-    if (question.options) {
-      updateData.options = JSON.stringify(question.options);
-    }
-    
-    const { error } = await supabase.from('questions')
-      .update(updateData)
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error updating question:', error);
-      throw error;
-    }
-    
-    console.log('Question updated successfully');
-  },
+export const deleteQuestion = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('questions')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting question:', error);
+    throw error;
+  }
+};
 
-  async deleteQuestion(id: string): Promise<void> {
-    console.log('Deleting question via API...', id);
-    
-    const { error } = await supabase.from('questions')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting question:', error);
-      throw error;
-    }
-    
-    console.log('Question deleted successfully');
-  },
+// Quiz attempts API
+export const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completed_at'>): Promise<QuizAttempt> => {
+  const { data, error } = await supabase
+    .from('quiz_attempts')
+    .insert([attempt])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error saving quiz attempt:', error);
+    throw error;
+  }
+  
+  return data;
+};
 
-  // Quiz Attempts API
-  async saveQuizAttempt(attempt: QuizAttempt): Promise<void> {
-    console.log('Saving quiz attempt to API...', attempt);
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    const attemptWithUser = {
-      ...attempt,
-      user_id: user?.id || null
-    };
-    
-    const { error } = await supabase.from('quiz_attempts').insert([attemptWithUser]);
-    if (error) {
-      console.error('Error saving quiz attempt:', error);
-      throw error;
-    }
-    
-    console.log('Quiz attempt saved successfully');
-  },
+export const fetchQuizAttempts = async (userId?: string): Promise<QuizAttempt[]> => {
+  let query = supabase.from('quiz_attempts').select('*');
+  
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+  
+  const { data, error } = await query.order('completed_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching quiz attempts:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
 
-  async getQuizAttempts(): Promise<QuizAttempt[]> {
-    console.log('Fetching quiz attempts from API...');
-    
-    const { data, error } = await supabase.from('quiz_attempts')
-      .select('*')
-      .order('completed_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching quiz attempts:', error);
-      throw error;
-    }
-    
-    console.log(`Fetched ${data?.length || 0} quiz attempts`);
-    return data || [];
-  },
+// User progress API
+export const fetchUserProgress = async (userId: string, subject?: string): Promise<UserProgress[]> => {
+  let query = supabase.from('user_progress').select('*').eq('user_id', userId);
+  
+  if (subject) {
+    query = query.eq('subject', subject);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error('Error fetching user progress:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
 
-  // User Progress API
-  async updateUserProgress(progress: UserProgress): Promise<void> {
-    console.log('Updating user progress via API...', progress);
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    const progressWithUser = {
-      ...progress,
-      user_id: user?.id || null
-    };
-    
-    const { error } = await supabase.from('user_progress')
-      .upsert([progressWithUser], { onConflict: 'user_id,subject' });
-    
-    if (error) {
-      console.error('Error updating user progress:', error);
-      throw error;
-    }
-    
-    console.log('User progress updated successfully');
-  },
+export const updateUserProgress = async (progress: Omit<UserProgress, 'id' | 'created_at' | 'updated_at'>): Promise<UserProgress> => {
+  const { data, error } = await supabase
+    .from('user_progress')
+    .upsert([progress], { onConflict: 'user_id,subject' })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating user progress:', error);
+    throw error;
+  }
+  
+  return data;
+};
 
-  async getUserProgress(): Promise<UserProgress[]> {
-    console.log('Fetching user progress from API...');
-    
-    const { data, error } = await supabase.from('user_progress').select('*');
-    if (error) {
-      console.error('Error fetching user progress:', error);
-      throw error;
-    }
-    
-    console.log(`Fetched ${data?.length || 0} progress records`);
-    return data || [];
-  },
+// Admin API
+export const makeUserAdmin = async (email: string): Promise<void> => {
+  // First get the user ID from the profiles table
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .single();
 
-  // Flashcard Progress API
-  async updateFlashcardProgress(progress: FlashcardProgress): Promise<void> {
-    console.log('Updating flashcard progress via API...', progress);
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    const progressWithUser = {
-      ...progress,
-      user_id: user?.id || null
-    };
-    
-    const { error } = await supabase.from('flashcard_progress')
-      .upsert([progressWithUser], { onConflict: 'user_id,card_id' });
-    
-    if (error) {
-      console.error('Error updating flashcard progress:', error);
-      throw error;
-    }
-    
-    console.log('Flashcard progress updated successfully');
-  },
+  if (profileError || !profile) {
+    console.error('Error finding user profile:', profileError);
+    throw new Error('User not found');
+  }
 
-  async getFlashcardProgress(): Promise<FlashcardProgress[]> {
-    console.log('Fetching flashcard progress from API...');
-    
-    const { data, error } = await supabase.from('flashcard_progress').select('*');
-    if (error) {
-      console.error('Error fetching flashcard progress:', error);
-      throw error;
-    }
-    
-    console.log(`Fetched ${data?.length || 0} flashcard progress records`);
-    return data || [];
-  },
+  // Insert admin role for the user
+  const { error } = await supabase
+    .from('user_roles')
+    .upsert([{ user_id: profile.id, role: 'admin' }], { onConflict: 'user_id,role' });
 
-  // Statistics API
-  async getStats() {
-    console.log('Fetching platform statistics from API...');
-    
-    const [quizAttemptsResult, userProgressResult] = await Promise.all([
-      supabase.from('quiz_attempts').select('*'),
-      supabase.from('user_progress').select('*')
-    ]);
-
-    const quizAttempts = quizAttemptsResult.data || [];
-    const userProgress = userProgressResult.data || [];
-
-    const totalUsers = new Set(quizAttempts.map(q => q.user_id).filter(Boolean)).size || 1;
-    const completedQuizzes = quizAttempts.length;
-    const totalQuestions = quizAttempts.reduce((sum, attempt) => sum + attempt.total_questions, 0);
-    const totalCorrect = quizAttempts.reduce((sum, attempt) => sum + attempt.score, 0);
-    
-    const completionRate = totalQuestions > 0 ? Math.round((completedQuizzes / totalUsers) * 100) : 94;
-    const averageScore = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 87;
-
-    const stats = {
-      activeUsers: totalUsers > 0 ? `${totalUsers}+` : '10K+',
-      completionRate: `${completionRate}%`,
-      averageImprovement: `+${Math.max(15, Math.round(averageScore - 70))}%`
-    };
-    
-    console.log('Platform statistics fetched:', stats);
-    return stats;
+  if (error) {
+    console.error('Error making user admin:', error);
+    throw error;
   }
 };

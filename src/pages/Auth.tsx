@@ -60,6 +60,11 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleDemoLogin = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
@@ -138,10 +143,26 @@ const Auth = () => {
                 
                 <div className="mt-4 p-3 bg-muted rounded-lg">
                   <p className="text-sm font-medium mb-2">Demo Accounts:</p>
-                  <p className="text-xs text-muted-foreground">
-                    Admin: admin@example.com<br/>
-                    User: user@example.com<br/>
-                    Password: password123
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs"
+                      onClick={() => handleDemoLogin('sinhaayush0806@gmail.com', 'Sinha080603')}
+                    >
+                      Admin: sinhaayush0806@gmail.com
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs"
+                      onClick={() => handleDemoLogin('user@example.com', 'password123')}
+                    >
+                      User: user@example.com
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Click on any demo account to auto-fill credentials
                   </p>
                 </div>
               </CardContent>
